@@ -1,0 +1,31 @@
+# cctokmon configuration
+# Location: ~/.config/cctokmon/config
+# Override with: CCTOKMON_CONFIG=/path/to/config cctokmon
+
+# Refresh interval in seconds
+REFRESH_INTERVAL=10
+
+# Mode: "bridge" (real-time via statusline) or "polling" (stats-cache.json)
+MODE=bridge
+
+# State file written by the statusline companion script (bridge mode)
+STATE_FILE="$HOME/.claude/cctokmon-state.json"
+
+# Stats cache path (polling mode)
+STATS_CACHE="$HOME/.claude/stats-cache.json"
+
+# JSONL projects directory
+PROJECTS_DIR="$HOME/.claude/projects"
+
+# Cost display scope: "session" | "daily" | "cumulative"
+COST_SCOPE=session
+
+# Color theme: "default" | "minimal" | "none"
+THEME=default
+
+# Model pricing (USD per 1M tokens) — update as Anthropic publishes new rates
+# Format: "INPUT_PRICE:OUTPUT_PRICE"
+# These are used in polling mode only; bridge mode uses cost.total_cost_usd directly.
+PRICING_OPUS_4="15.00:75.00"
+PRICING_SONNET_4="3.00:15.00"
+PRICING_HAIKU_4_5="0.80:4.00"

@@ -1,0 +1,5 @@
+# Claude Code local project settings (machine-specific paths)
+.claude/settings.local.json
+
+# Internal build specification (not user-facing)
+claude-token-monitor-spec.md
