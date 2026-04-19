@@ -75,7 +75,7 @@ sudo dnf install jq        # Fedora/RHEL
 ## Installation
 
 ```bash
-git clone https://github.com/yourname/cctokmon.git
+git clone https://github.com/ramon-webdevpro-nl/cctokmon.git
 cd cctokmon
 bash install.sh
 ```
