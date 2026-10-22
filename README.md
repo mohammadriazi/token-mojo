@@ -96,9 +96,9 @@ bash install.sh
 
 The installer will:
 
-1. Check all dependencies and offer to install any that are missing via your system package manager (apt / dnf / brew)
+1. Check all dependencies and offer to install any that are missing via your system package manager (apt / dnf / brew / winget)
 2. Copy your config to `~/.config/cctokmon/config`
-3. Symlink `cctokmon` to `~/.local/bin/cctokmon`
+3. Symlink `cctokmon` to `~/.local/bin/cctokmon` (on Windows, a small launcher script, since Git Bash cannot reliably symlink)
 4. Copy the statusline companion script to `~/.claude/cctokmon-statusline.sh`
 5. Optionally configure the statusline bridge in `~/.claude/settings.json`
 
@@ -258,7 +258,7 @@ The build is self-contained, so the machine running it needs no .NET runtime. Wi
 bash uninstall.sh
 ```
 
-Removes the symlink at `~/.local/bin/cctokmon`, the statusline script at `~/.claude/cctokmon-statusline.sh`, the state file at `~/.claude/cctokmon-state.json`, the per-session files in `~/.claude/cctokmon-sessions/`, and the `statusLine` entry from `~/.claude/settings.json`. Optionally removes `~/.config/cctokmon`.
+Removes the symlink (or Windows launcher) at `~/.local/bin/cctokmon`, the statusline script at `~/.claude/cctokmon-statusline.sh`, the state file at `~/.claude/cctokmon-state.json`, the per-session files in `~/.claude/cctokmon-sessions/`, and the `statusLine` entry from `~/.claude/settings.json`. Optionally removes `~/.config/cctokmon`.
 
 On Windows, turn off **Launch at Login** and quit TokenMojo, then delete `%LOCALAPPDATA%\Programs\TokenMojo` and `%LOCALAPPDATA%\TokenMojo` (the saved pop-out position).
 
