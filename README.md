@@ -234,21 +234,49 @@ printf '%s' "$input" | "$HOME/.claude/cctokmon-statusline.sh" >/dev/null 2>&1
 
 ## TokenMojo: Windows tray app
 
-`windows/` contains the same dashboard for Windows 10 and 11, as a notification-area (system tray) app. The tray icon is one ring gauge showing whichever of the 5-hour limit, 7-day limit and context window is highest, with its percentage inside; hover it for all three plus session cost. Left-click opens the dashboard beside the taskbar; right-click opens the menu. **Pop Out Window** opens the dashboard in a window that stays on top. It follows the Windows light/dark theme.
+`windows/` contains the same dashboard for Windows 10 and 11, as a notification-area (system tray) app. It follows the Windows light/dark theme.
 
-It reads the same bridge files as the Mac app, so complete the [Installation](#installation) with the statusline bridge enabled first. It finds them wherever Claude Code runs:
+It reads the same bridge files as the Mac app, so complete the [Installation](#installation) with the statusline bridge enabled first, wherever Claude Code runs:
 
-- **Native Windows** — `%USERPROFILE%\.claude`, written by the bridge under Git Bash (see the Windows note under [Requirements](#requirements)).
-- **WSL** — `~/.claude` in every running WSL distro, read over `\\wsl.localhost`. Run `install.sh` inside WSL; nothing extra is needed on the Windows side. Stopped distros are never started just to be read.
+- **Native Windows** — run `install.sh` from Git Bash (see the Windows note under [Requirements](#requirements)). The bridge writes to `%USERPROFILE%\.claude`.
+- **WSL** — run `install.sh` inside WSL. TokenMojo reads `~/.claude` in every running WSL distro over `\\wsl.localhost`; stopped distros are never started just to be read.
 
-Sessions from all of them appear in one list. Then build it from Git Bash (needs the [.NET 10 SDK](https://dotnet.microsoft.com/download)):
+If you use both, sessions from all of them appear in one list. If you already have your own statusline script, chain the bridge from it as shown in the [macOS section](#tokenmojo-macos-menu-bar-app) instead of replacing it.
+
+### Build
+
+Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download) on the machine that builds it. The result is self-contained, so the machine that runs it needs no .NET runtime. From Git Bash:
 
 ```bash
 bash windows/build.sh        # runs the tests, builds %LOCALAPPDATA%\Programs\TokenMojo\TokenMojo.exe
 "$LOCALAPPDATA/Programs/TokenMojo/TokenMojo.exe" &
 ```
 
-The build is self-contained, so the machine running it needs no .NET runtime. Windows hides new tray icons under the **^** arrow at first; drag the ring onto the taskbar to keep it visible. Enable **Launch at Login** from its menu to start it automatically. Quit TokenMojo before re-running `build.sh` after pulling updates.
+Or from WSL, with the .NET 10 SDK installed there, passing the Windows folder to build into:
+
+```bash
+bash windows/build.sh "/mnt/c/Users/<you>/AppData/Local/Programs/TokenMojo"
+"/mnt/c/Users/<you>/AppData/Local/Programs/TokenMojo/TokenMojo.exe" &
+```
+
+Quit TokenMojo before re-running `build.sh` after pulling updates.
+
+### Using it
+
+Windows hides new tray icons under the **^** arrow beside the clock at first; drag the ring onto the taskbar to keep it visible.
+
+- **The icon** is one ring for whichever of the 5-hour limit, 7-day limit and context window is highest, with that percentage inside: green under 50%, orange from 50%, red from 80%. `!` means 100% or more, and `–` means there is no data yet. A limit whose window has reset shows "Reset — awaiting update" in the dashboard until your next Claude Code interaction refreshes it.
+- **Hover** for all three gauges plus the session cost.
+- **Left-click** opens the dashboard beside the taskbar; click elsewhere to close it. It shows the current session's model, name and folder, the 5-hour and 7-day rings with their reset times, the context window, cost, lines changed and tokens, and every session from the last 12 hours. In that list a green dot means the session was active in the last 10 minutes, grey means idle, and the highlighted row is the current session.
+- **Pop Out Window** opens the same dashboard in a window that stays on top; closing it remembers where it was.
+- **Launch at Login** (in the dashboard or the right-click menu) starts it automatically. **Quit** is in both too.
+
+The 5-hour and 7-day rings appear only for Claude Pro and Max subscribers; with an API key there are no rate limits, so only the context window shows.
+
+### Troubleshooting
+
+- **"No bridge data yet"** — the bridge has not written anything. Check that `statusLine` is set in `~/.claude/settings.json` (re-run `install.sh` if not), then send any message in Claude Code; the dashboard updates within 5 seconds. For WSL, the distro must be running, and a newly started distro is picked up within a minute.
+- **Native Windows only:** Claude Code needs Git Bash to run the bridge, and needs restarting after jq is installed so it finds jq.
 
 ---
 
