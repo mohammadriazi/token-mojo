@@ -78,6 +78,12 @@ sudo apt install jq        # Debian/Ubuntu
 sudo dnf install jq        # Fedora/RHEL
 ```
 
+**Windows:** run everything from Git Bash ([Git for Windows](https://gitforwindows.org/)), which ships Bash, tput and awk. Claude Code runs the statusline through Git Bash when it is installed (otherwise PowerShell, which cannot run the bridge). The installer offers to install jq with winget:
+```bash
+winget install --exact --id jqlang.jq
+```
+Restart Claude Code afterwards so it picks up jq on its PATH. If you run Claude Code inside WSL instead, follow the Linux steps inside WSL.
+
 ---
 
 ## Installation
