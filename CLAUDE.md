@@ -59,8 +59,9 @@ No build step — scripts run directly with bash.
 ### Installer (`install.sh`)
 
 - Checks all deps (bash 4+, jq, tput, awk) before touching anything.
-- If deps are missing: detects package manager (brew / apt / dnf / yum), shows what it will install, prompts once, then re-verifies.
-- Symlinks `cctokmon.sh` to `~/.local/bin/cctokmon`.
+- If deps are missing: detects package manager (brew / apt / dnf / yum / winget), shows what it will install, prompts once, then re-verifies.
+- Symlinks `cctokmon.sh` to `~/.local/bin/cctokmon`. Under Git Bash on Windows (`uname -s` is `MINGW*`/`MSYS*`/`CYGWIN*`) it writes a small launcher script instead: `ln -s` there silently copies the file unless Developer Mode is on, and a copy cannot find `install.sh` for `--setup`. `uninstall.sh` removes either form.
+- On Windows only jq needs installing (Git Bash ships tput and awk); winget's links dir is added to `PATH` for the re-verify, since the running shell predates it.
 - Copies `cctokmon-statusline.sh` to `~/.claude/cctokmon-statusline.sh`.
 - Optionally sets `statusLine` in `~/.claude/settings.json` via `jq`. The correct format is an object: `{"type": "command", "command": "/path/to/script"}` — not a plain string (Claude Code's `/doctor` will flag a plain string as invalid).
 
