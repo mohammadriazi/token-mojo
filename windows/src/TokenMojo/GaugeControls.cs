@@ -4,26 +4,30 @@ using TokenMojo.Core;
 
 namespace TokenMojo;
 
-/// <summary>The circular gauge from LimitRing in the Mac app; also draws the tray icon.</summary>
-public sealed class RingGauge : FrameworkElement
+/// <summary>The percent, severity colour and track shared by the dashboard's ring and bar gauges.</summary>
+public abstract class SeverityGauge : FrameworkElement
 {
     public static readonly DependencyProperty PercentProperty = DependencyProperty.Register(
-        nameof(Percent), typeof(double), typeof(RingGauge), new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
+        nameof(Percent), typeof(double), typeof(SeverityGauge), new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty SeverityProperty = DependencyProperty.Register(
-        nameof(Severity), typeof(Severity), typeof(RingGauge), new FrameworkPropertyMetadata(Severity.Ok, FrameworkPropertyMetadataOptions.AffectsRender));
+        nameof(Severity), typeof(Severity), typeof(SeverityGauge), new FrameworkPropertyMetadata(Severity.Ok, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty TrackBrushProperty = DependencyProperty.Register(
-        nameof(TrackBrush), typeof(Brush), typeof(RingGauge), new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public static readonly DependencyProperty ThicknessProperty = DependencyProperty.Register(
-        nameof(Thickness), typeof(double), typeof(RingGauge), new FrameworkPropertyMetadata(9.0, FrameworkPropertyMetadataOptions.AffectsRender));
+        nameof(TrackBrush), typeof(Brush), typeof(SeverityGauge), new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public double Percent { get => (double)GetValue(PercentProperty); set => SetValue(PercentProperty, value); }
 
     public Severity Severity { get => (Severity)GetValue(SeverityProperty); set => SetValue(SeverityProperty, value); }
 
     public Brush TrackBrush { get => (Brush)GetValue(TrackBrushProperty); set => SetValue(TrackBrushProperty, value); }
+}
+
+/// <summary>The circular gauge from LimitRing in the Mac app; also draws the tray icon.</summary>
+public sealed class RingGauge : SeverityGauge
+{
+    public static readonly DependencyProperty ThicknessProperty = DependencyProperty.Register(
+        nameof(Thickness), typeof(double), typeof(RingGauge), new FrameworkPropertyMetadata(9.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public double Thickness { get => (double)GetValue(ThicknessProperty); set => SetValue(ThicknessProperty, value); }
 
@@ -62,23 +66,8 @@ public sealed class RingGauge : FrameworkElement
 }
 
 /// <summary>The rounded progress bar from CapsuleBar in the Mac app.</summary>
-public sealed class CapsuleBar : FrameworkElement
+public sealed class CapsuleBar : SeverityGauge
 {
-    public static readonly DependencyProperty PercentProperty = DependencyProperty.Register(
-        nameof(Percent), typeof(double), typeof(CapsuleBar), new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public static readonly DependencyProperty SeverityProperty = DependencyProperty.Register(
-        nameof(Severity), typeof(Severity), typeof(CapsuleBar), new FrameworkPropertyMetadata(Severity.Ok, FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public static readonly DependencyProperty TrackBrushProperty = DependencyProperty.Register(
-        nameof(TrackBrush), typeof(Brush), typeof(CapsuleBar), new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public double Percent { get => (double)GetValue(PercentProperty); set => SetValue(PercentProperty, value); }
-
-    public Severity Severity { get => (Severity)GetValue(SeverityProperty); set => SetValue(SeverityProperty, value); }
-
-    public Brush TrackBrush { get => (Brush)GetValue(TrackBrushProperty); set => SetValue(TrackBrushProperty, value); }
-
     protected override void OnRender(DrawingContext drawingContext)
     {
         double radius = ActualHeight / 2;

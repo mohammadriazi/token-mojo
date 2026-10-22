@@ -70,6 +70,23 @@ public sealed class ClaudeDirLocatorTests : IDisposable
         Assert.Single(locator.Locate());
     }
 
+    [Fact]
+    public void Locate_UnreadableDistroHome_SkipsThatDistroOnly()
+    {
+        // Arrange
+        string share = _temp.MakeDir("share");
+        string blocked = _temp.MakeDir("share/Broken/home");
+        _temp.MakeDir("share/Ubuntu/home/alice/.claude");
+        ClaudeDirLocator locator = new(_temp.MakeDir("winhome"), new FakeWsl("Broken", "Ubuntu"), NoEnv, share);
+        using IDisposable denied = TempDir.DenyRead(blocked);
+
+        // Act
+        IReadOnlyList<ClaudeSource> sources = locator.Locate();
+
+        // Assert
+        Assert.Equal(["Windows", "Ubuntu:alice"], sources.Select(s => s.Name));
+    }
+
     private static string? NoEnv(string name) => null;
 
     private sealed class FakeWsl(params string[] running) : IWslDistros

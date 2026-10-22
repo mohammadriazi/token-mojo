@@ -12,26 +12,68 @@ public class GaugesTests
     [Fact]
     public void LivePercent_WindowNotYetReset_ReturnsUsedPercentage()
     {
-        Assert.Equal(23.5, Gauges.LivePercent(new BridgeLimit(23.5, Future), Now));
+        // Act
+        double? percent = Gauges.LivePercent(new BridgeLimit(23.5, Future), Now);
+
+        // Assert
+        Assert.Equal(23.5, percent);
     }
 
     [Fact]
     public void LivePercent_WindowAlreadyReset_ReturnsNull()
     {
         // The bridge only refreshes on the next interaction, so the stored value is stale.
-        Assert.Null(Gauges.LivePercent(new BridgeLimit(23.5, Past), Now));
+        // Act
+        double? percent = Gauges.LivePercent(new BridgeLimit(23.5, Past), Now);
+
+        // Assert
+        Assert.Null(percent);
     }
 
     [Fact]
     public void LivePercent_NoResetTime_ReturnsUsedPercentage()
     {
-        Assert.Equal(23.5, Gauges.LivePercent(new BridgeLimit(23.5, null), Now));
+        // Act
+        double? percent = Gauges.LivePercent(new BridgeLimit(23.5, null), Now);
+
+        // Assert
+        Assert.Equal(23.5, percent);
     }
 
     [Fact]
     public void LivePercent_NoLimit_ReturnsNull()
     {
-        Assert.Null(Gauges.LivePercent(null, Now));
+        // Act
+        double? percent = Gauges.LivePercent(null, Now);
+
+        // Assert
+        Assert.Null(percent);
+    }
+
+    [Fact]
+    public void LivePercent_ResetTimeBeyondDateRange_TreatsWindowAsOpen()
+    {
+        // Arrange
+        BridgeLimit limit = new(23.5, 1.79e15);
+
+        // Act
+        double? percent = Gauges.LivePercent(limit, Now);
+
+        // Assert
+        Assert.Equal(23.5, percent);
+    }
+
+    [Fact]
+    public void ResetText_ResetTimeBeyondDateRange_DoesNotThrow()
+    {
+        // Arrange
+        BridgeLimit limit = new(23.5, 1.79e15);
+
+        // Act
+        string text = Gauges.ResetText(limit, Now);
+
+        // Assert
+        Assert.StartsWith("Resets ", text);
     }
 
     [Theory]
@@ -43,7 +85,11 @@ public class GaugesTests
     [InlineData(120, Severity.Critical)]
     public void SeverityOf_Percent_MatchesMacThresholds(double percent, Severity expected)
     {
-        Assert.Equal(expected, Gauges.SeverityOf(percent));
+        // Act
+        Severity severity = Gauges.SeverityOf(percent);
+
+        // Assert
+        Assert.Equal(expected, severity);
     }
 
     [Theory]
@@ -52,7 +98,11 @@ public class GaugesTests
     [InlineData(null, "–")]
     public void PercentText_TruncatesToWholePercent(double? percent, string expected)
     {
-        Assert.Equal(expected, Gauges.PercentText(percent));
+        // Act
+        string text = Gauges.PercentText(percent);
+
+        // Assert
+        Assert.Equal(expected, text);
     }
 
     [Theory]
@@ -62,7 +112,11 @@ public class GaugesTests
     [InlineData(null, "–")]
     public void IconText_FitsTwoCharactersInTheTrayIcon(double? percent, string expected)
     {
-        Assert.Equal(expected, Gauges.IconText(percent));
+        // Act
+        string text = Gauges.IconText(percent);
+
+        // Assert
+        Assert.Equal(expected, text);
     }
 
     [Fact]
@@ -86,7 +140,11 @@ public class GaugesTests
     [Fact]
     public void CostText_MissingCost_ShowsZero()
     {
-        Assert.Equal("$0.00", Gauges.CostText(null, 2));
+        // Act
+        string text = Gauges.CostText(null, 2);
+
+        // Assert
+        Assert.Equal("$0.00", text);
     }
 
     [Fact]
@@ -164,19 +222,31 @@ public class GaugesTests
     [Fact]
     public void ResetText_NoLimit_ShowsNotApplicable()
     {
-        Assert.Equal("n/a", Gauges.ResetText(null, Now));
+        // Act
+        string text = Gauges.ResetText(null, Now);
+
+        // Assert
+        Assert.Equal("n/a", text);
     }
 
     [Fact]
     public void ResetText_PercentWithoutResetTime_ShowsBlank()
     {
-        Assert.Equal(" ", Gauges.ResetText(new BridgeLimit(10, null), Now));
+        // Act
+        string text = Gauges.ResetText(new BridgeLimit(10, null), Now);
+
+        // Assert
+        Assert.Equal(" ", text);
     }
 
     [Fact]
     public void ResetText_WindowAlreadyReset_SaysAwaitingUpdate()
     {
-        Assert.Equal("Reset — awaiting update", Gauges.ResetText(new BridgeLimit(10, Past), Now));
+        // Act
+        string text = Gauges.ResetText(new BridgeLimit(10, Past), Now);
+
+        // Assert
+        Assert.Equal("Reset — awaiting update", text);
     }
 
     [Fact]
@@ -206,6 +276,10 @@ public class GaugesTests
     [InlineData(@"C:\Users\alice\proj", "proj")]
     public void FolderName_WslOrWindowsPath_ReturnsLastSegment(string directory, string expected)
     {
-        Assert.Equal(expected, Gauges.FolderName(directory));
+        // Act
+        string folder = Gauges.FolderName(directory);
+
+        // Assert
+        Assert.Equal(expected, folder);
     }
 }

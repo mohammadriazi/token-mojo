@@ -101,7 +101,7 @@ internal sealed class TrayController : IDisposable
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException)
         {
-            // A WSL distro can stop between discovery and the read; rediscover on the next tick.
+            // The newest state file was replaced or its distro stopped mid-read; rediscover on the next tick.
             _lastDiscovery = DateTimeOffset.MinValue;
             Trace.TraceWarning("TokenMojo: cannot read bridge files: {0}", e.Message);
             return new BridgeSnapshot(null, [], e.Message);

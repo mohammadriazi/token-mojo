@@ -51,7 +51,11 @@ public sealed class SessionStoreTests : IDisposable
     [Fact]
     public void LoadSessions_SessionsDirNotCreatedYet_ReturnsEmpty()
     {
-        Assert.Empty(SessionStore.LoadSessions([_temp.Source("missing")], Now));
+        // Act
+        IReadOnlyList<SessionSnapshot> sessions = SessionStore.LoadSessions([_temp.Source("missing")], Now);
+
+        // Assert
+        Assert.Empty(sessions);
     }
 
     [Fact]
@@ -66,6 +70,36 @@ public sealed class SessionStoreTests : IDisposable
 
         // Assert
         Assert.Equal(["b", "a"], sessions.Select(s => s.Id));
+    }
+
+    [Fact]
+    public void LoadSessions_UnreadableSourceDir_KeepsOtherSources()
+    {
+        // Arrange
+        _temp.Write("win/cctokmon-sessions/a.json", Payloads.ForSession("a"), Now);
+        _temp.Write("wsl/cctokmon-sessions/b.json", Payloads.ForSession("b"), Now);
+        using IDisposable denied = TempDir.DenyRead(Path.Combine(_temp.Path, "wsl", "cctokmon-sessions"));
+
+        // Act
+        IReadOnlyList<SessionSnapshot> sessions = SessionStore.LoadSessions([_temp.Source("win"), _temp.Source("wsl")], Now);
+
+        // Assert
+        Assert.Equal(["a"], sessions.Select(s => s.Id));
+    }
+
+    [Fact]
+    public void LoadSessions_UnreadableSessionFile_IsSkipped()
+    {
+        // Arrange
+        string locked = _temp.Write("win/cctokmon-sessions/locked.json", Payloads.ForSession("locked"), Now);
+        _temp.Write("win/cctokmon-sessions/good.json", Payloads.ForSession("good"), Now);
+        using IDisposable denied = TempDir.DenyRead(locked);
+
+        // Act
+        IReadOnlyList<SessionSnapshot> sessions = SessionStore.LoadSessions([_temp.Source("win")], Now);
+
+        // Assert
+        Assert.Equal(["good"], sessions.Select(s => s.Id));
     }
 
     [Fact]
@@ -87,7 +121,11 @@ public sealed class SessionStoreTests : IDisposable
     [Fact]
     public void LoadCurrent_NoStateFileAnywhere_ReturnsNull()
     {
-        Assert.Null(SessionStore.LoadCurrent([_temp.Source("win"), _temp.Source("wsl")]));
+        // Act
+        LoadedState? current = SessionStore.LoadCurrent([_temp.Source("win"), _temp.Source("wsl")]);
+
+        // Assert
+        Assert.Null(current);
     }
 
     [Theory]

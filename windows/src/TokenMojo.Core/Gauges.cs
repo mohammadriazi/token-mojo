@@ -9,6 +9,10 @@ public sealed record GlanceGauge(string Label, double? Percent);
 /// <summary>Display rules shared with the macOS app (menubar/TokenMojo.swift); keep the two in step.</summary>
 public static class Gauges
 {
+    // Keeps ToLocalTime in range for any time zone offset.
+    private static readonly DateTimeOffset LatestReset = DateTimeOffset.MaxValue.AddDays(-2);
+    private static readonly DateTimeOffset EarliestReset = DateTimeOffset.MinValue.AddDays(2);
+
     public static IReadOnlyList<GlanceGauge> Glance(BridgeState state, DateTimeOffset now)
     {
         List<GlanceGauge> gauges = new();
@@ -31,7 +35,7 @@ public static class Gauges
     public static double? LivePercent(BridgeLimit? limit, DateTimeOffset now)
     {
         if (limit?.UsedPercentage is not { } percent) return null;
-        if (limit.ResetsAt is { } resetsAt && DateTimeOffset.FromUnixTimeSeconds((long)resetsAt) < now) return null;
+        if (limit.ResetsAt is { } resetsAt && ResetTime(resetsAt) < now) return null;
         return percent;
     }
 
@@ -54,7 +58,7 @@ public static class Gauges
     public static string ResetText(BridgeLimit? limit, DateTimeOffset now)
     {
         if (limit?.ResetsAt is not { } resetsAt) return limit?.UsedPercentage is null ? "n/a" : " ";
-        DateTimeOffset reset = DateTimeOffset.FromUnixTimeSeconds((long)resetsAt);
+        DateTimeOffset reset = ResetTime(resetsAt);
         if (reset < now) return "Reset — awaiting update";
         DateTimeOffset local = reset.ToLocalTime();
         return reset - now > TimeSpan.FromDays(1) ? $"Resets {local:ddd} {local:t}" : $"Resets {local:t}";
@@ -63,4 +67,10 @@ public static class Gauges
     // Sessions come from Windows and WSL, so split on both separators.
     public static string FolderName(string directory) =>
         directory.TrimEnd('/', '\\').Split('/', '\\')[^1];
+
+    // Never throws, like Swift's Date(timeIntervalSince1970:): a value outside the calendar clamps to its ends.
+    private static DateTimeOffset ResetTime(double unixSeconds) =>
+        unixSeconds >= LatestReset.ToUnixTimeSeconds() ? LatestReset
+        : unixSeconds <= EarliestReset.ToUnixTimeSeconds() ? EarliestReset
+        : DateTimeOffset.FromUnixTimeSeconds((long)unixSeconds);
 }

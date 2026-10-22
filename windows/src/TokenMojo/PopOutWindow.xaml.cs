@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Interop;
 
 namespace TokenMojo;
 
@@ -9,13 +10,13 @@ public partial class PopOutWindow : Window
     public PopOutWindow()
     {
         InitializeComponent();
+        WindowChrome.Apply(this, round: false);
         if (PopOutPlacement.Load() is { } position)
         {
             WindowStartupLocation = WindowStartupLocation.Manual;
-            Left = position.X;
-            Top = position.Y;
+            Native.SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero, position.X, position.Y, 0, 0,
+                Native.NoSizeNoZOrderNoActivate);
         }
-        WindowChrome.Apply(this, round: false);
     }
 
     public DashboardView View => Dashboard;
@@ -30,7 +31,7 @@ public partial class PopOutWindow : Window
     protected override void OnClosing(CancelEventArgs e)
     {
         e.Cancel = true;
-        PopOutPlacement.Save(new Point(Left, Top));
+        PopOutPlacement.Save(Native.TopLeft(new WindowInteropHelper(this).Handle));
         Hide();
     }
 }

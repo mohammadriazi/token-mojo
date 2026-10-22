@@ -1,7 +1,5 @@
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Media;
 
 namespace TokenMojo;
 
@@ -9,7 +7,7 @@ namespace TokenMojo;
 public partial class FlyoutWindow : Window
 {
     private const int EdgeMargin = 12;
-    private const uint NoSizeNoZOrderNoActivate = 0x0001 | 0x0004 | 0x0010;
+    private const int OffScreen = -32000;
     private static readonly TimeSpan ReopenGuard = TimeSpan.FromMilliseconds(300);
     private DateTime _hiddenAt = DateTime.MinValue;
 
@@ -39,27 +37,32 @@ public partial class FlyoutWindow : Window
         Activate();
     }
 
-    // Clamped into the cursor's work area, so it sits beside the taskbar wherever that is docked.
+    // Clamped into the cursor's work area, so it sits beside the taskbar wherever that is docked. The scale
+    // is the cursor's monitor's, which the flyout adopts once it moves there.
     private void PlaceNearCursor()
     {
         UpdateLayout();
-        DpiScale dpi = VisualTreeHelper.GetDpi(this);
-        int width = (int)Math.Ceiling(ActualWidth * dpi.DpiScaleX);
-        int height = (int)Math.Ceiling(ActualHeight * dpi.DpiScaleY);
         System.Drawing.Point cursor = System.Windows.Forms.Cursor.Position;
         System.Drawing.Rectangle area = System.Windows.Forms.Screen.FromPoint(cursor).WorkingArea;
-        int margin = (int)(EdgeMargin * dpi.DpiScaleX);
+        double scale = Native.ScaleAt(cursor);
+        int width = (int)Math.Ceiling(ActualWidth * scale);
+        int height = (int)Math.Ceiling(ActualHeight * scale);
+        int margin = (int)(EdgeMargin * scale);
         int x = Math.Clamp(cursor.X - width / 2, area.Left + margin, Math.Max(area.Left + margin, area.Right - width - margin));
         int y = Math.Clamp(cursor.Y - height - margin, area.Top + margin, Math.Max(area.Top + margin, area.Bottom - height - margin));
-        SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero, x, y, 0, 0, NoSizeNoZOrderNoActivate);
+        Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, Native.NoSizeNoZOrderNoActivate);
     }
 
+    // Parked off-screen while hidden, so the next Show doesn't flash at the old spot before it is placed.
     private void HideFlyout()
     {
         if (!IsVisible) return;
         Hide();
+        Native.SetWindowPos(Handle, IntPtr.Zero, OffScreen, OffScreen, 0, 0, Native.NoSizeNoZOrderNoActivate);
         _hiddenAt = DateTime.UtcNow;
     }
+
+    private IntPtr Handle => new WindowInteropHelper(this).Handle;
 
     private void OnPopOut(object sender, RoutedEventArgs e)
     {
@@ -74,8 +77,4 @@ public partial class FlyoutWindow : Window
     }
 
     private void OnQuit(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
-
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
 }

@@ -32,7 +32,14 @@ public sealed class DashboardTests : IDisposable
     [Fact]
     public void Build_ApiKeyState_ShowsNoRings()
     {
-        Assert.Empty(Build(BridgeState.Parse(Payloads.Full) with { RateLimits = null }).Limits);
+        // Arrange
+        BridgeState state = BridgeState.Parse(Payloads.Full) with { RateLimits = null };
+
+        // Act
+        DashboardModel model = Build(state);
+
+        // Assert
+        Assert.Empty(model.Limits);
     }
 
     [Fact]
@@ -79,7 +86,11 @@ public sealed class DashboardTests : IDisposable
     [Fact]
     public void Build_NoContextWindow_HidesContextCard()
     {
-        Assert.Null(Build(BridgeState.Parse("{}")).Context);
+        // Act
+        DashboardModel model = Build(BridgeState.Parse("{}"));
+
+        // Assert
+        Assert.Null(model.Context);
     }
 
     [Fact]
@@ -137,7 +148,11 @@ public sealed class DashboardTests : IDisposable
     [Fact]
     public void Build_NoRecentSessions_HidesSessionList()
     {
-        Assert.Null(Build(BridgeState.Parse(Payloads.Full)).Sessions);
+        // Act
+        DashboardModel model = Build(BridgeState.Parse(Payloads.Full));
+
+        // Assert
+        Assert.Null(model.Sessions);
     }
 
     [Fact]
@@ -210,7 +225,11 @@ public sealed class DashboardTests : IDisposable
     [InlineData(86400, true, "1 day ago")]
     public void RelativeAge_MatchesMacFormatterWording(int seconds, bool abbreviated, string expected)
     {
-        Assert.Equal(expected, Dashboard.RelativeAge(TimeSpan.FromSeconds(seconds), abbreviated));
+        // Act
+        string age = Dashboard.RelativeAge(TimeSpan.FromSeconds(seconds), abbreviated);
+
+        // Assert
+        Assert.Equal(expected, age);
     }
 
     private static DashboardModel Build(BridgeState state, IReadOnlyList<SessionSnapshot>? sessions = null) =>

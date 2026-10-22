@@ -29,19 +29,27 @@ public sealed class ClaudeDirLocator(
         return sources;
     }
 
-    private IEnumerable<ClaudeSource> DistroSources(string distro)
+    private List<ClaudeSource> DistroSources(string distro)
     {
         string distroRoot = Path.Combine(wslShareRoot, distro);
-        List<(string User, string Home)> homes = new() { ("root", Path.Combine(distroRoot, "root")) };
+        List<(string User, string Home)> homes = new();
         string homeDir = Path.Combine(distroRoot, "home");
-        if (Directory.Exists(homeDir))
-            homes.InsertRange(0, Directory.EnumerateDirectories(homeDir).Order().Select(home => (Path.GetFileName(home), home)));
-        foreach ((string user, string home) in homes)
+        try
         {
-            string claude = Path.Combine(home, ".claude");
-            if (Directory.Exists(claude))
-                yield return new ClaudeSource($"{distro}:{user}",
-                    Path.Combine(claude, StateFileName), Path.Combine(claude, SessionsDirName));
+            if (Directory.Exists(homeDir))
+                homes.AddRange(Directory.EnumerateDirectories(homeDir).Order().Select(home => (Path.GetFileName(home), home)));
         }
+        // The distro may stop between listing and reading, or deny access to /home.
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
+        homes.Add(("root", Path.Combine(distroRoot, "root")));
+        return homes
+            .Select(entry => (entry.User, Claude: Path.Combine(entry.Home, ".claude")))
+            .Where(entry => Directory.Exists(entry.Claude))
+            .Select(entry => new ClaudeSource($"{distro}:{entry.User}",
+                Path.Combine(entry.Claude, StateFileName), Path.Combine(entry.Claude, SessionsDirName)))
+            .ToList();
     }
 }

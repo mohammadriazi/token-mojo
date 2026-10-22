@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using System.Windows;
 
 namespace TokenMojo;
 
@@ -10,16 +9,16 @@ internal static class PopOutPlacement
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TokenMojo", "popout.json");
 
-    public static Point? Load()
+    // Physical pixels, so the check below matches the monitors' own coordinates at any scale factor.
+    public static System.Drawing.Point? Load()
     {
         try
         {
             Saved? saved = JsonSerializer.Deserialize<Saved>(File.ReadAllText(FilePath));
             if (saved is null) return null;
-            Rect desktop = new(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
-                SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
-            // A monitor may have been unplugged since.
-            return desktop.Contains(new Point(saved.Left, saved.Top)) ? new Point(saved.Left, saved.Top) : null;
+            System.Drawing.Point position = new(saved.Left, saved.Top);
+            // A monitor may have been unplugged or moved since.
+            return System.Windows.Forms.Screen.AllScreens.Any(screen => screen.WorkingArea.Contains(position)) ? position : null;
         }
         catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException or JsonException)
         {
@@ -27,11 +26,11 @@ internal static class PopOutPlacement
         }
     }
 
-    public static void Save(Point position)
+    public static void Save(System.Drawing.Point position)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
         File.WriteAllText(FilePath, JsonSerializer.Serialize(new Saved(position.X, position.Y)));
     }
 
-    private sealed record Saved(double Left, double Top);
+    private sealed record Saved(int Left, int Top);
 }
