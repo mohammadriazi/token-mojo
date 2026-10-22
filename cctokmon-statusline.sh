@@ -16,6 +16,18 @@ input=$(cat)
 # Atomically write to state file
 printf '%s\n' "$input" > "$TMP_FILE" && mv "$TMP_FILE" "$STATE_FILE"
 
+# Per-session copies let the menu bar app list every recent session
+SESSIONS_DIR="${CCTOKMON_SESSIONS_DIR:-$HOME/.claude/cctokmon-sessions}"
+if command -v jq >/dev/null 2>&1; then
+    sid=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)
+    # session_id becomes a filename, so accept only UUID-style characters
+    if [[ "$sid" =~ ^[A-Za-z0-9-]+$ ]]; then
+        mkdir -p "$SESSIONS_DIR"
+        printf '%s\n' "$input" > "$SESSIONS_DIR/$sid.json.tmp" && mv "$SESSIONS_DIR/$sid.json.tmp" "$SESSIONS_DIR/$sid.json"
+        find "$SESSIONS_DIR" -name '*.json' -mtime +7 -delete 2>/dev/null
+    fi
+fi
+
 # Output a compact one-line status for Claude Code's own statusbar
 if command -v jq >/dev/null 2>&1; then
     read -r cost pct <<< "$(printf '%s' "$input" | jq -r '
