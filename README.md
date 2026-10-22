@@ -1,3 +1,11 @@
+# TokenMojo
+
+**Mo tokens, mo mojo.** A macOS menu bar app that keeps your Claude Code rate limits, context window and cost in view — with a dashboard of every recent session and a pop-out window that stays on top. See [TokenMojo: macOS menu bar app](#tokenmojo-macos-menu-bar-app) to install it.
+
+TokenMojo is built on [cctokmon](https://github.com/ramon-webdevpro-nl/cctokmon) (MIT), whose statusline bridge supplies its data. The cctokmon terminal dashboard is documented below and still works as before.
+
+---
+
 # cctokmon
 
 **Live token usage, cost, and context window monitor for Claude Code.**
@@ -75,8 +83,8 @@ sudo dnf install jq        # Fedora/RHEL
 ## Installation
 
 ```bash
-git clone https://github.com/ramon-webdevpro-nl/cctokmon.git
-cd cctokmon
+git clone https://github.com/mohammadriazi/token-mojo.git
+cd token-mojo
 bash install.sh
 ```
 
@@ -195,15 +203,15 @@ The statusline script must complete in under 100ms (Claude Code requirement). It
 
 ---
 
-## macOS menu bar app
+## TokenMojo: macOS menu bar app
 
-`menubar/` contains a native menu bar companion (macOS 13+). The menu bar shows ring gauges for the 5-hour limit, 7-day limit and context window plus session cost; clicking it opens a dashboard with the active session's details and a list of every session from the last 12 hours. **Pop Out Window** opens the same dashboard in a floating window that stays on top.
+`menubar/` contains TokenMojo, a native menu bar companion (macOS 13+). The menu bar shows ring gauges for the 5-hour limit, 7-day limit and context window plus session cost; clicking it opens a dashboard with the active session's details and a list of every session from the last 12 hours. **Pop Out Window** opens the same dashboard in a floating window that stays on top.
 
 It reads the bridge files, so complete the [Installation](#installation) with the statusline bridge enabled first. Then build it (needs the Xcode command line tools: `xcode-select --install`):
 
 ```bash
-bash menubar/build.sh        # builds ~/Applications/CCTokMon.app
-open ~/Applications/CCTokMon.app
+bash menubar/build.sh        # builds ~/Applications/TokenMojo.app
+open ~/Applications/TokenMojo.app
 ```
 
 Enable **Launch at Login** from its menu to start it automatically. Re-run `build.sh` after pulling updates.

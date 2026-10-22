@@ -1,4 +1,4 @@
-// CCTokMonBar — macOS menu bar companion for cctokmon.
+// TokenMojo — macOS menu bar companion for cctokmon.
 // Reads the statusline bridge file (~/.claude/cctokmon-state.json) and shows
 // rate-limit gauges in the menu bar, with a session dashboard in the dropdown.
 import AppKit
@@ -88,8 +88,8 @@ final class MenuBarController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let button = statusItem.button else { return }
         guard case .success(let (state, updated)) = loadState() else {
             button.image = nil
-            button.title = "CC –"
-            button.toolTip = "cctokmon: no bridge data yet"
+            button.title = "Mojo –"
+            button.toolTip = "TokenMojo: no bridge data yet"
             return
         }
         let cost = String(format: "$%.2f", state.cost?.totalCostUsd ?? 0)
@@ -122,7 +122,7 @@ final class MenuBarController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let panel = NSPanel(contentRect: NSRect(origin: .zero, size: view.fittingSize),
                                 styleMask: [.titled, .closable, .utilityWindow, .nonactivatingPanel],
                                 backing: .buffered, defer: false)
-            panel.title = "CCTokMon"
+            panel.title = "TokenMojo"
             panel.contentView = view
             panel.level = .floating
             panel.isFloatingPanel = true
@@ -131,7 +131,7 @@ final class MenuBarController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             panel.isReleasedWhenClosed = false
             panel.center()
-            panel.setFrameAutosaveName("CCTokMonPopOut")
+            panel.setFrameAutosaveName("TokenMojoPopOut")
             popOut = panel
             popOutView = view
         }
@@ -158,7 +158,7 @@ final class MenuBarController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
             return []  // Directory appears after the first bridge write.
         } catch {
-            NSLog("cctokmon: cannot list %@: %@", sessionsURL.path, error.localizedDescription)
+            NSLog("TokenMojo: cannot list %@: %@", sessionsURL.path, error.localizedDescription)
             return []
         }
         let cutoff = Date().addingTimeInterval(-12 * 3600)
