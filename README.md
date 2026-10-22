@@ -1,3 +1,11 @@
+# TokenMojo
+
+**Mo tokens, mo mojo.** A macOS menu bar app that keeps your Claude Code rate limits, context window and cost in view — with a dashboard of every recent session and a pop-out window that stays on top. See [TokenMojo: macOS menu bar app](#tokenmojo-macos-menu-bar-app) to install it.
+
+TokenMojo is built on [cctokmon](https://github.com/ramon-webdevpro-nl/cctokmon) (MIT), whose statusline bridge supplies its data. The cctokmon terminal dashboard is documented below and still works as before.
+
+---
+
 # cctokmon
 
 **Live token usage, cost, and context window monitor for Claude Code.**
@@ -75,8 +83,8 @@ sudo dnf install jq        # Fedora/RHEL
 ## Installation
 
 ```bash
-git clone https://github.com/ramon-webdevpro-nl/cctokmon.git
-cd cctokmon
+git clone https://github.com/mohammadriazi/token-mojo.git
+cd token-mojo
 bash install.sh
 ```
 
@@ -191,7 +199,30 @@ cctokmon-statusline.sh
 cctokmon.sh  →  terminal dashboard
 ```
 
-The statusline script must complete in under 100ms (Claude Code requirement). It reads stdin, writes to a temp file, and atomically renames it — the entire script is under 20 lines.
+The statusline script must complete in under 100ms (Claude Code requirement). It reads stdin, writes to a temp file, and atomically renames it. It also keeps a per-session copy in `~/.claude/cctokmon-sessions/<session_id>.json` (pruned after 7 days) so the menu bar app can list every recent session.
+
+---
+
+## TokenMojo: macOS menu bar app
+
+`menubar/` contains TokenMojo, a native menu bar companion (macOS 13+). The menu bar shows ring gauges for the 5-hour limit, 7-day limit and context window plus session cost; clicking it opens a dashboard with the active session's details and a list of every session from the last 12 hours. **Pop Out Window** opens the same dashboard in a floating window that stays on top.
+
+It reads the bridge files, so complete the [Installation](#installation) with the statusline bridge enabled first. Then build it (needs the Xcode command line tools: `xcode-select --install`):
+
+```bash
+bash menubar/build.sh        # builds ~/Applications/TokenMojo.app
+open ~/Applications/TokenMojo.app
+```
+
+Enable **Launch at Login** from its menu to start it automatically. Re-run `build.sh` after pulling updates.
+
+If you already use your own statusline script, keep it and chain the bridge from inside it instead of replacing it:
+
+```bash
+input=$(cat)
+printf '%s' "$input" | "$HOME/.claude/cctokmon-statusline.sh" >/dev/null 2>&1
+# ...rest of your statusline, reading "$input"
+```
 
 ---
 
@@ -201,7 +232,7 @@ The statusline script must complete in under 100ms (Claude Code requirement). It
 bash uninstall.sh
 ```
 
-Removes the symlink at `~/.local/bin/cctokmon`, the statusline script at `~/.claude/cctokmon-statusline.sh`, the state file at `~/.claude/cctokmon-state.json`, and the `statusLine` entry from `~/.claude/settings.json`. Optionally removes `~/.config/cctokmon`.
+Removes the symlink at `~/.local/bin/cctokmon`, the statusline script at `~/.claude/cctokmon-statusline.sh`, the state file at `~/.claude/cctokmon-state.json`, the per-session files in `~/.claude/cctokmon-sessions/`, and the `statusLine` entry from `~/.claude/settings.json`. Optionally removes `~/.config/cctokmon`.
 
 ---
 

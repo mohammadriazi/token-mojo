@@ -8,6 +8,7 @@ CLAUDE_DIR="$HOME/.claude"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 STATUSLINE_DEST="$CLAUDE_DIR/cctokmon-statusline.sh"
 STATE_FILE="$CLAUDE_DIR/cctokmon-state.json"
+SESSIONS_DIR="$CLAUDE_DIR/cctokmon-sessions"
 
 if tput colors &>/dev/null 2>&1 && [[ "$(tput colors)" -ge 8 ]]; then
     R=$(tput sgr0); BOLD=$(tput bold)
@@ -37,6 +38,12 @@ fi
 if [[ -f "$STATE_FILE" ]]; then
     rm "$STATE_FILE"
     ok "Removed: ${STATE_FILE}"
+fi
+
+# Remove per-session state written for the menu bar app
+if [[ -d "$SESSIONS_DIR" ]]; then
+    rm -rf "$SESSIONS_DIR"
+    ok "Removed: ${SESSIONS_DIR}"
 fi
 
 # Remove statusLine from settings.json
