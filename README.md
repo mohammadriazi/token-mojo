@@ -1,6 +1,6 @@
 # TokenMojo
 
-**Mo tokens, mo mojo.** A macOS menu bar app that keeps your Claude Code rate limits, context window and cost in view — with a dashboard of every recent session and a pop-out window that stays on top. See [TokenMojo: macOS menu bar app](#tokenmojo-macos-menu-bar-app) to install it.
+**Mo tokens, mo mojo.** A macOS menu bar app and Windows tray app that keeps your Claude Code rate limits, context window and cost in view — with a dashboard of every recent session and a pop-out window that stays on top. See [TokenMojo: macOS menu bar app](#tokenmojo-macos-menu-bar-app) or [TokenMojo: Windows tray app](#tokenmojo-windows-tray-app) to install it.
 
 TokenMojo is built on [cctokmon](https://github.com/ramon-webdevpro-nl/cctokmon) (MIT), whose statusline bridge supplies its data. The cctokmon terminal dashboard is documented below and still works as before.
 
@@ -232,6 +232,26 @@ printf '%s' "$input" | "$HOME/.claude/cctokmon-statusline.sh" >/dev/null 2>&1
 
 ---
 
+## TokenMojo: Windows tray app
+
+`windows/` contains the same dashboard for Windows 10 and 11, as a notification-area (system tray) app. The tray icon is one ring gauge showing whichever of the 5-hour limit, 7-day limit and context window is highest, with its percentage inside; hover it for all three plus session cost. Left-click opens the dashboard beside the taskbar; right-click opens the menu. **Pop Out Window** opens the dashboard in a window that stays on top. It follows the Windows light/dark theme.
+
+It reads the same bridge files as the Mac app, so complete the [Installation](#installation) with the statusline bridge enabled first. It finds them wherever Claude Code runs:
+
+- **Native Windows** — `%USERPROFILE%\.claude`, written by the bridge under Git Bash (see the Windows note under [Requirements](#requirements)).
+- **WSL** — `~/.claude` in every running WSL distro, read over `\\wsl.localhost`. Run `install.sh` inside WSL; nothing extra is needed on the Windows side. Stopped distros are never started just to be read.
+
+Sessions from all of them appear in one list. Then build it from Git Bash (needs the [.NET 10 SDK](https://dotnet.microsoft.com/download)):
+
+```bash
+bash windows/build.sh        # runs the tests, builds %LOCALAPPDATA%\Programs\TokenMojo\TokenMojo.exe
+"$LOCALAPPDATA/Programs/TokenMojo/TokenMojo.exe" &
+```
+
+The build is self-contained, so the machine running it needs no .NET runtime. Windows hides new tray icons under the **^** arrow at first; drag the ring onto the taskbar to keep it visible. Enable **Launch at Login** from its menu to start it automatically. Quit TokenMojo before re-running `build.sh` after pulling updates.
+
+---
+
 ## Uninstall
 
 ```bash
@@ -239,6 +259,8 @@ bash uninstall.sh
 ```
 
 Removes the symlink at `~/.local/bin/cctokmon`, the statusline script at `~/.claude/cctokmon-statusline.sh`, the state file at `~/.claude/cctokmon-state.json`, the per-session files in `~/.claude/cctokmon-sessions/`, and the `statusLine` entry from `~/.claude/settings.json`. Optionally removes `~/.config/cctokmon`.
+
+On Windows, turn off **Launch at Login** and quit TokenMojo, then delete `%LOCALAPPDATA%\Programs\TokenMojo` and `%LOCALAPPDATA%\TokenMojo` (the saved pop-out position).
 
 ---
 
