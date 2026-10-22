@@ -676,6 +676,27 @@ cmd_check() {
         printf '%b stats-cache.json not found: %s\n' "$warn" "$STATS_CACHE"
     fi
 
+    # statusLine command: object form {"command": ...} or legacy plain string
+    local settings="$HOME/.claude/settings.json" sl_cmd=""
+    [[ -f "$settings" ]] && command -v jq >/dev/null 2>&1 && \
+        sl_cmd=$(jq -r '(.statusLine | objects | .command) // (.statusLine | strings) // empty' \
+            "$settings" 2>/dev/null || true)
+    local sl_is_ours=0 sl_note="" w
+    if [[ "$sl_cmd" == *cctokmon-statusline.sh* ]]; then
+        sl_is_ours=1
+    else
+        # A user's own statusline script may chain cctokmon-statusline.sh internally
+        local -a sl_words=()
+        read -ra sl_words <<< "$sl_cmd"
+        for w in "${sl_words[@]}"; do
+            w="${w/#\~/$HOME}"
+            if [[ -f "$w" ]] && grep -q 'cctokmon-statusline\.sh' "$w" 2>/dev/null; then
+                sl_is_ours=1 sl_note=" (chains cctokmon)"
+                break
+            fi
+        done
+    fi
+
     # State file (bridge)
     if [[ -f "$STATE_FILE" ]]; then
         local sage=$(( $(date +%s) - $(file_mtime "$STATE_FILE") ))
@@ -685,12 +706,8 @@ cmd_check() {
             printf '%b State file: %ds old\n' "$ok" "$sage"
         fi
     else
-        # Check if statusline is configured — if so, the file will appear after the next Claude Code interaction
-        local _sl=""
-        local _settings="$HOME/.claude/settings.json"
-        [[ -f "$_settings" ]] && command -v jq >/dev/null 2>&1 && \
-            _sl=$(jq -r '.statusLine // empty' "$_settings" 2>/dev/null || true)
-        if [[ -n "$_sl" ]]; then
+        # If cctokmon's statusline is configured, the file will appear after the next Claude Code interaction
+        if [[ $sl_is_ours -eq 1 ]]; then
             printf '%b State file not found yet\n     Statusline is configured — start a Claude Code session to populate it.\n' "$warn"
         else
             printf '%b State file not found: %s\n     Run: cctokmon --setup\n' "$warn" "$STATE_FILE"
@@ -698,11 +715,11 @@ cmd_check() {
     fi
 
     # Claude Code statusline
-    local settings="$HOME/.claude/settings.json"
     if [[ -f "$settings" ]] && command -v jq >/dev/null 2>&1; then
-        local sl; sl=$(jq -r '.statusLine // empty' "$settings" 2>/dev/null || true)
-        if [[ -n "$sl" ]]; then
-            printf '%b statusLine: %s\n' "$ok" "$sl"
+        if [[ $sl_is_ours -eq 1 ]]; then
+            printf '%b statusLine: %s%s\n' "$ok" "$sl_cmd" "$sl_note"
+        elif [[ -n "$sl_cmd" ]]; then
+            printf '%b statusLine is not cctokmon'"'"'s: %s\n     Bridge mode gets no data. Run: cctokmon --setup  (or use --mode polling)\n' "$warn" "$sl_cmd"
         else
             printf '%b No statusLine in ~/.claude/settings.json\n     Run: cctokmon --setup\n' "$warn"
         fi
