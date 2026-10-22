@@ -31,15 +31,18 @@ info() { printf '  %s\n' "$*"; }
 
 # ── Detect OS and package manager ──────────────────────────────────────────────
 OS="$(uname -s)"
+IS_WINDOWS=0
+case "$OS" in MINGW*|MSYS*|CYGWIN*) IS_WINDOWS=1 ;; esac
 PKG_MGR=""
 if   [[ "$OS" == "Darwin" ]] && command -v brew    >/dev/null 2>&1; then PKG_MGR="brew"
+elif [[ "$IS_WINDOWS" -eq 1 ]] && command -v winget >/dev/null 2>&1; then PKG_MGR="winget"
 elif command -v apt-get >/dev/null 2>&1;                               then PKG_MGR="apt"
 elif command -v dnf     >/dev/null 2>&1;                               then PKG_MGR="dnf"
 elif command -v yum     >/dev/null 2>&1;                               then PKG_MGR="yum"
 fi
 
 # Package name map: tool → apt/dnf/brew package
-declare -A PKG_APT PKG_BREW PKG_DNF
+declare -A PKG_APT PKG_BREW PKG_DNF PKG_WINGET
 PKG_APT["jq"]="jq"
 PKG_APT["tput"]="ncurses-bin"
 PKG_APT["awk"]="gawk"
@@ -49,11 +52,14 @@ PKG_BREW["awk"]="gawk"
 PKG_DNF["jq"]="jq"
 PKG_DNF["tput"]="ncurses"
 PKG_DNF["awk"]="gawk"
+# Git Bash ships tput and awk; only jq needs installing on Windows
+PKG_WINGET["jq"]="jqlang.jq"
 
 pkg_name() {
     local tool="$1"
     case "$PKG_MGR" in
         brew) echo "${PKG_BREW[$tool]:-$tool}" ;;
+        winget) echo "${PKG_WINGET[$tool]:-$tool}" ;;
         dnf|yum) echo "${PKG_DNF[$tool]:-$tool}" ;;
         *) echo "${PKG_APT[$tool]:-$tool}" ;;
     esac
@@ -96,7 +102,7 @@ if [[ ${#MISSING_TOOLS[@]} -gt 0 ]]; then
     printf '\n%sMissing: %s%s\n' "${BOLD}" "${MISSING_TOOLS[*]}" "${R}"
 
     if [[ -z "$PKG_MGR" ]]; then
-        err "No supported package manager found (apt, dnf, yum, brew)."
+        err "No supported package manager found (apt, dnf, yum, brew, winget)."
         info "Install manually and re-run:"
         for tool in "${MISSING_TOOLS[@]}"; do
             info "  ${tool}"
@@ -135,6 +141,18 @@ if [[ ${#MISSING_TOOLS[@]} -gt 0 ]]; then
             fi
             sudo "$PKG_MGR" install -y "${PKG_LIST[@]}"
             ;;
+        winget)
+            printf '  Install with winget (%s)? [Y/n] ' "${PKG_LIST[*]}"
+            read -r ans
+            if [[ "${ans,,}" == "n" ]]; then
+                info "Run manually: winget install --exact --id ${PKG_LIST[*]}"; exit 1
+            fi
+            for pkg in "${PKG_LIST[@]}"; do
+                winget install --exact --id "$pkg"
+            done
+            # winget adds its links dir to the user PATH, which this shell predates
+            PATH="$(cygpath -u "$LOCALAPPDATA")/Microsoft/WinGet/Links:$PATH"
+            ;;
     esac
 
     # Re-verify after install
@@ -165,8 +183,16 @@ mkdir -p "$BIN_DIR"
 
 # Symlink main script
 chmod +x "${SCRIPT_DIR}/cctokmon.sh"
-ln -sf "${SCRIPT_DIR}/cctokmon.sh" "${BIN_DIR}/cctokmon"
-ok "Symlinked: ${BIN_DIR}/cctokmon → ${SCRIPT_DIR}/cctokmon.sh"
+if [[ "$IS_WINDOWS" -eq 1 ]]; then
+    # Git Bash's ln -s silently copies without Developer Mode, and a copy cannot
+    # find install.sh for --setup, so install a launcher instead
+    printf '#!/usr/bin/env bash\n# cctokmon launcher\nexec bash %q "$@"\n' "${SCRIPT_DIR}/cctokmon.sh" > "${BIN_DIR}/cctokmon"
+    chmod +x "${BIN_DIR}/cctokmon"
+    ok "Launcher: ${BIN_DIR}/cctokmon → ${SCRIPT_DIR}/cctokmon.sh"
+else
+    ln -sf "${SCRIPT_DIR}/cctokmon.sh" "${BIN_DIR}/cctokmon"
+    ok "Symlinked: ${BIN_DIR}/cctokmon → ${SCRIPT_DIR}/cctokmon.sh"
+fi
 
 # Copy statusline companion
 chmod +x "${SCRIPT_DIR}/cctokmon-statusline.sh"
