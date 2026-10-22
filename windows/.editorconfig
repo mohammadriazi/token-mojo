@@ -1,0 +1,21 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+[*.{csproj,props,slnx,xml,manifest}]
+indent_size = 2
+
+[*.cs]
+csharp_style_var_for_built_in_types = false:error
+csharp_style_var_when_type_is_apparent = false:error
+csharp_style_var_elsewhere = false:error
+dotnet_diagnostic.IDE0008.severity = error
+
+# Explicit types without repeating them: List<T> items = new();
+csharp_style_implicit_object_creation_when_type_is_apparent = true:error
+dotnet_diagnostic.IDE0090.severity = error

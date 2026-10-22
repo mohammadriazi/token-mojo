@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TokenMojo.Core/TokenMojo.Core.csproj" />
+    <Project Path="src/TokenMojo/TokenMojo.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TokenMojo.Core.Tests/TokenMojo.Core.Tests.csproj" />
+  </Folder>
+</Solution>

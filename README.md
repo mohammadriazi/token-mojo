@@ -1,6 +1,6 @@
 # TokenMojo
 
-**Mo tokens, mo mojo.** A macOS menu bar app that keeps your Claude Code rate limits, context window and cost in view — with a dashboard of every recent session and a pop-out window that stays on top. See [TokenMojo: macOS menu bar app](#tokenmojo-macos-menu-bar-app) to install it.
+**Mo tokens, mo mojo.** A macOS menu bar app and Windows tray app that keeps your Claude Code rate limits, context window and cost in view — with a dashboard of every recent session and a pop-out window that stays on top. See [TokenMojo: macOS menu bar app](#tokenmojo-macos-menu-bar-app) or [TokenMojo: Windows tray app](#tokenmojo-windows-tray-app) to install it.
 
 TokenMojo is built on [cctokmon](https://github.com/ramon-webdevpro-nl/cctokmon) (MIT), whose statusline bridge supplies its data. The cctokmon terminal dashboard is documented below and still works as before.
 
@@ -78,6 +78,12 @@ sudo apt install jq        # Debian/Ubuntu
 sudo dnf install jq        # Fedora/RHEL
 ```
 
+**Windows:** run everything from Git Bash ([Git for Windows](https://gitforwindows.org/)), which ships Bash, tput and awk. Claude Code runs the statusline through Git Bash when it is installed (otherwise PowerShell, which cannot run the bridge). The installer offers to install jq with winget:
+```bash
+winget install --exact --id jqlang.jq
+```
+Restart Claude Code afterwards so it picks up jq on its PATH. If you run Claude Code inside WSL instead, follow the Linux steps inside WSL.
+
 ---
 
 ## Installation
@@ -90,9 +96,9 @@ bash install.sh
 
 The installer will:
 
-1. Check all dependencies and offer to install any that are missing via your system package manager (apt / dnf / brew)
+1. Check all dependencies and offer to install any that are missing via your system package manager (apt / dnf / brew / winget)
 2. Copy your config to `~/.config/cctokmon/config`
-3. Symlink `cctokmon` to `~/.local/bin/cctokmon`
+3. Symlink `cctokmon` to `~/.local/bin/cctokmon` (on Windows, a small launcher script, since Git Bash cannot reliably symlink)
 4. Copy the statusline companion script to `~/.claude/cctokmon-statusline.sh`
 5. Optionally configure the statusline bridge in `~/.claude/settings.json`
 
@@ -226,13 +232,63 @@ printf '%s' "$input" | "$HOME/.claude/cctokmon-statusline.sh" >/dev/null 2>&1
 
 ---
 
+## TokenMojo: Windows tray app
+
+`windows/` contains the same dashboard for Windows 10 and 11, as a notification-area (system tray) app. It follows the Windows light/dark theme.
+
+It reads the same bridge files as the Mac app, so complete the [Installation](#installation) with the statusline bridge enabled first, wherever Claude Code runs:
+
+- **Native Windows** — run `install.sh` from Git Bash (see the Windows note under [Requirements](#requirements)). The bridge writes to `%USERPROFILE%\.claude`.
+- **WSL** — run `install.sh` inside WSL. TokenMojo reads `~/.claude` in every running WSL distro over `\\wsl.localhost`; stopped distros are never started just to be read.
+
+If you use both, sessions from all of them appear in one list. If you already have your own statusline script, chain the bridge from it as shown in the [macOS section](#tokenmojo-macos-menu-bar-app) instead of replacing it.
+
+### Build
+
+Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download) on the machine that builds it. The result is self-contained, so the machine that runs it needs no .NET runtime. From Git Bash:
+
+```bash
+bash windows/build.sh        # runs the tests, builds %LOCALAPPDATA%\Programs\TokenMojo\TokenMojo.exe
+"$LOCALAPPDATA/Programs/TokenMojo/TokenMojo.exe" &
+```
+
+Or from WSL, with the .NET 10 SDK installed there, passing the Windows folder to build into:
+
+```bash
+bash windows/build.sh "/mnt/c/Users/<you>/AppData/Local/Programs/TokenMojo"
+"/mnt/c/Users/<you>/AppData/Local/Programs/TokenMojo/TokenMojo.exe" &
+```
+
+Quit TokenMojo before re-running `build.sh` after pulling updates.
+
+### Using it
+
+Windows hides new tray icons under the **^** arrow beside the clock at first; drag the ring onto the taskbar to keep it visible.
+
+- **The icon** is one ring for whichever of the 5-hour limit, 7-day limit and context window is highest, with that percentage inside: green under 50%, orange from 50%, red from 80%. `!` means 100% or more, and `–` means there is no data yet. A limit whose window has reset shows "Reset — awaiting update" in the dashboard until your next Claude Code interaction refreshes it.
+- **Hover** for all three gauges plus the session cost.
+- **Left-click** opens the dashboard beside the taskbar; click elsewhere to close it. It shows the current session's model, name and folder, the 5-hour and 7-day rings with their reset times, the context window, cost, lines changed and tokens, and every session from the last 12 hours. In that list a green dot means the session was active in the last 10 minutes, grey means idle, and the highlighted row is the current session.
+- **Pop Out Window** opens the same dashboard in a window that stays on top; closing it remembers where it was.
+- **Launch at Login** (in the dashboard or the right-click menu) starts it automatically. **Quit** is in both too.
+
+The 5-hour and 7-day rings appear only for Claude Pro and Max subscribers; with an API key there are no rate limits, so only the context window shows.
+
+### Troubleshooting
+
+- **"No bridge data yet"** — the bridge has not written anything. Check that `statusLine` is set in `~/.claude/settings.json` (re-run `install.sh` if not), then send any message in Claude Code; the dashboard updates within 5 seconds. For WSL, the distro must be running, and a newly started distro is picked up within a minute.
+- **Native Windows only:** Claude Code needs Git Bash to run the bridge, and needs restarting after jq is installed so it finds jq.
+
+---
+
 ## Uninstall
 
 ```bash
 bash uninstall.sh
 ```
 
-Removes the symlink at `~/.local/bin/cctokmon`, the statusline script at `~/.claude/cctokmon-statusline.sh`, the state file at `~/.claude/cctokmon-state.json`, the per-session files in `~/.claude/cctokmon-sessions/`, and the `statusLine` entry from `~/.claude/settings.json`. Optionally removes `~/.config/cctokmon`.
+Removes the symlink (or Windows launcher) at `~/.local/bin/cctokmon`, the statusline script at `~/.claude/cctokmon-statusline.sh`, the state file at `~/.claude/cctokmon-state.json`, the per-session files in `~/.claude/cctokmon-sessions/`, and the `statusLine` entry from `~/.claude/settings.json`. Optionally removes `~/.config/cctokmon`.
+
+On Windows, turn off **Launch at Login** and quit TokenMojo, then delete `%LOCALAPPDATA%\Programs\TokenMojo` and `%LOCALAPPDATA%\TokenMojo` (the saved pop-out position).
 
 ---
 

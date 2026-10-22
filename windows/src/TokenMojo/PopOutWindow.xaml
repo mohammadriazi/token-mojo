@@ -1,0 +1,10 @@
+<Window x:Class="TokenMojo.PopOutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TokenMojo"
+        Title="TokenMojo"
+        WindowStyle="ToolWindow" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBrush}">
+    <local:DashboardView x:Name="Dashboard" />
+</Window>

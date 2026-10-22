@@ -22,8 +22,8 @@ warn() { printf '%s⚠%s  %s\n' "${YELLOW}" "${R}" "$*"; }
 
 printf '\n%scctokmon uninstaller%s\n%s\n\n' "${BOLD}" "${R}" "────────────────────"
 
-# Remove symlink
-if [[ -L "${BIN_DIR}/cctokmon" ]]; then
+# Remove symlink, or the launcher install.sh writes on Windows
+if [[ -L "${BIN_DIR}/cctokmon" ]] || grep -qx '# cctokmon launcher' "${BIN_DIR}/cctokmon" 2>/dev/null; then
     rm "${BIN_DIR}/cctokmon"
     ok "Removed: ${BIN_DIR}/cctokmon"
 fi
